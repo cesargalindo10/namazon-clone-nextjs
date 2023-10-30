@@ -26,6 +26,10 @@ import { UserCountArgs } from "./UserCountArgs";
 import { UserFindManyArgs } from "./UserFindManyArgs";
 import { UserFindUniqueArgs } from "./UserFindUniqueArgs";
 import { User } from "./User";
+import { OrdeFindManyArgs } from "../../orde/base/OrdeFindManyArgs";
+import { Orde } from "../../orde/base/Orde";
+import { ReviewFindManyArgs } from "../../review/base/ReviewFindManyArgs";
+import { Review } from "../../review/base/Review";
 import { UserService } from "../user.service";
 @common.UseGuards(GqlDefaultAuthGuard, gqlACGuard.GqlACGuard)
 @graphql.Resolver(() => User)
@@ -130,5 +134,45 @@ export class UserResolverBase {
       }
       throw error;
     }
+  }
+
+  @common.UseInterceptors(AclFilterResponseInterceptor)
+  @graphql.ResolveField(() => [Orde], { name: "ordes" })
+  @nestAccessControl.UseRoles({
+    resource: "Orde",
+    action: "read",
+    possession: "any",
+  })
+  async resolveFieldOrdes(
+    @graphql.Parent() parent: User,
+    @graphql.Args() args: OrdeFindManyArgs
+  ): Promise<Orde[]> {
+    const results = await this.service.findOrdes(parent.id, args);
+
+    if (!results) {
+      return [];
+    }
+
+    return results;
+  }
+
+  @common.UseInterceptors(AclFilterResponseInterceptor)
+  @graphql.ResolveField(() => [Review], { name: "reviews" })
+  @nestAccessControl.UseRoles({
+    resource: "Review",
+    action: "read",
+    possession: "any",
+  })
+  async resolveFieldReviews(
+    @graphql.Parent() parent: User,
+    @graphql.Args() args: ReviewFindManyArgs
+  ): Promise<Review[]> {
+    const results = await this.service.findReviews(parent.id, args);
+
+    if (!results) {
+      return [];
+    }
+
+    return results;
   }
 }
